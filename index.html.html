@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcher Ort passt zu dir?</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 650px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .progress {
+      font-size: 14px;
+      color: #718096;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+    h1 { color: #2d3748; font-size: 22px; margin-bottom: 20px; line-height: 1.4; }
+    .btn {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin: 8px 0;
+      width: 100%;
+      text-align: left;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: block;
+      box-sizing: border-box;
+      color: #4a5568;
+    }
+    .btn:hover {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    .result { display: none; }
+    .result-flag { font-size: 65px; margin: 10px 0; }
+    .result-title { font-size: 26px; color: #2d3748; font-weight: bold; }
+    .result-desc { font-size: 16px; color: #4a5568; line-height: 1.6; margin-top: 15px; text-align: justify; }
+    .restart-btn {
+      background: #764ba2;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      margin-top: 25px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div id="quiz">
+    <div class="progress" id="progress">Frage 1 von 12</div>
+    <h1 id="question">Frage lädt...</h1>
+    <div id="answers"></div>
+  </div>
+
+  <div id="result" class="result">
+    <div class="result-flag" id="flag">🎉</div>
+    <div class="result-title" id="place">Dein Ort</div>
+    <div class="result-desc" id="desc">Beschreibung...</div>
+    <button class="restart-btn" onclick="location.reload()">Noch einmal spielen 🔄</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "1. Wie sieht dein perfekter Feierabend aus?",
+    a: [
+      { text: "☕ Ich treffe Freunde in einem eleganten Café oder Restaurant.", type: "paris" },
+      { text: "🌳 Ich gehe spazieren oder genieße die Ruhe in der Natur.", type: "grindelwald" },
+      { text: "🏙️ Ich stürze mich ins Nachtleben einer riesigen Metropole.", type: "newyork" },
+      { text: "🚲 Ich fahre mit dem Fahrrad durch die Stadt und entspanne am Wasser.", type: "amsterdam" }
+    ]
+  },
+  {
+    q: "2. Was ist dir bei deiner täglichen Arbeit am wichtigsten?",
+    a: [
+      { text: "💼 Gute Karrierechancen, Innovation und viel Energie.", type: "newyork" },
+      { text: "🎨 Kreativität, Freiheit und eine gute Work-Life-Balance.", type: "amsterdam" },
+      { text: "☀️ Weniger Stress, Sonne und ein entspannter Arbeitsalltag.", type: "barcelona" },
+      { text: "🌲 Eine ruhige Umgebung, weit weg vom hektischen Büroalltag.", type: "rothenburg" }
+    ]
+  },
+  {
+    q: "3. Wie möchtest du dich am liebsten fortbewegen?",
+    a: [
+      { text: "🚲 Umweltfreundlich und aktiv mit dem Fahrrad.", type: "amsterdam" },
+      { text: "🚇 Schnell und unkompliziert mit U-Bahn und Bus.", type: "tokio" },
+      { text: "🚶 Zu Fuß durch historische Gassen oder schöne Naturwege.", type: "rothenburg" },
+      { text: "🚗 Oder am liebsten mit dem Zug durch beeindruckende Landschaften.", type: "grindelwald" }
+    ]
+  },
+  {
+    q: "4. Welches Wetter bevorzugst du?",
+    a: [
+      { text: "☀️ Viel Sonne, warme Tage und die Nähe zum Strand.", type: "barcelona" },
+      { text: "❄️ Frische Bergluft, Schnee im Winter und kühle Sommertage.", type: "grindelwald" },
+      { text: "🌤️ Mildes, abwechslungsreiches Wetter – Hauptsache viele Parks grün!", type: "london" },
+      { text: "🏙️ Das Wetter ist mir egal, solange die Stadt lebendig ist.", type: "tokio" }
+    ]
+  },
+  {
+    q: "5. Stell dir vor, du hast ein freies Wochenende. Was machst du?",
+    a: [
+      { text: "🎭 Ich besuche ein Museum, ein Theater oder eine Kunstausstellung.", type: "paris" },
+      { text: "🥾 Ich gehe in den Bergen wandern oder mache Klettersport.", type: "grindelwald" },
+      { text: "🛍️ Ich gehe shoppen und entdecke neue Trends.", type: "tokio" },
+      { text: "🏰 Ich erkunde eine alte Burg und genieße die Geschichte.", type: "rothenburg" }
+    ]
+  },
+  {
+    q: "6. Wie wichtig sind dir Cafés, Restaurants und Gastronomie?",
+    a: [
+      { text: "🍷 Sehr wichtig! Ich liebe gutes Essen und feine Gastronomie.", type: "paris" },
+      { text: "☕ Sehr wichtig, aber am liebsten entspannte Cafés am Meer.", type: "barcelona" },
+      { text: "🍜 Ich probiere gerne modernes Essen und Streetfood aus aller Welt.", type: "tokio" },
+      { text: "🍳 Ich koche lieber selbst oder passe mich dem einfachen Landleben an.", type: "rothenburg" }
+    ]
+  },
+  {
+    q: "7. Welches Umfeld gibt dir die meiste Energie?",
+    a: [
+      { text: "🏙️ Hohe Wolkenkratzer, viel Verkehr und ständige Bewegung.", type: "newyork" },
+      { text: "🌊 Das Meer, Palmen und die maritime Brise.", type: "barcelona" },
+      { text: "🏔️ Hohe Berge, Wiesen und eine spektakuläre Natur.", type: "grindelwald" },
+      { text: "🏛️ Klassische Architektur, Parks und historische Gebäude.", type: "london" }
+    ]
+  },
+  {
+    q: "8. Wie stehst du zum Thema Tradition und Geschichte?",
+    a: [
+      { text: "🏰 Ich liebe Geschichte, alte Fachwerkhäuser und Traditionen.", type: "rothenburg" },
+      { text: "🎨 Ich liebe historische Kultur, aber kombiniert mit Eleganz.", type: "paris" },
+      { text: "🤖 Geschichte ist okay, aber ich schaue lieber in die Zukunft und Technologie.", type: "tokio" },
+      { text: "🌍 Ich mag eine Mischung aus alter Tradition und moderner Vielfalt.", type: "london" }
+    ]
+  },
+  {
+    q: "9. Welcher Lebensstil beschreibt dich am besten?",
+    a: [
+      { text: "⚡ „Ich schlafe nie und möchte immer etwas Neues erleben.“", type: "newyork" },
+      { text: "🌿 „Ich möchte nachhaltig, gesund und frei leben.“", type: "amsterdam" },
+      { text: "🧘 „Ich brauche Entschleunigung, Ruhe und saubere Luft.“", type: "grindelwald" },
+      { text: "🏖️ „Genuss, Sonne und Gelassenheit stehen an erster Stelle.“", type: "barcelona" }
+    ]
+  },
+  {
+    q: "10. Wo möchtest du am liebsten wohnen?",
+    a: [
+      { text: "🏢 In einem modernen Apartment mitten im Stadtzentrum.", type: "newyork" },
+      { text: "🏡 In einem gemütlichen Haus in einem ruhigen Dorf.", type: "rothenburg" },
+      { text: "🏠 In einem schönen Altbau mit Blick auf einen Kanal oder Park.", type: "amsterdam" },
+      { text: "🪵 In einer Holzhütte in den Bergen.", type: "grindelwald" }
+    ]
+  },
+  {
+    q: "11. Wie gehst du mit Stress um?",
+    a: [
+      { text: "🏃‍♂️ Ich brauche Bewegung: Wandern oder Sport in der Natur.", type: "grindelwald" },
+      { text: "🎨 Ich lenke mich ab durch Kultur, Ausgehen oder Freunde treffen.", type: "london" },
+      { text: "🌊 Ich setze mich ans Wasser und genieße die Sonne.", type: "barcelona" },
+      { text: "☕ Ich trinke entspannt einen Kaffee und lese ein Buch.", type: "paris" }
+    ]
+  },
+  {
+    q: "12. Was ist dein absoluter Traum für die Zukunft?",
+    a: [
+      { text: "🚀 Großer Erfolg im Beruf und eine Weltkarriere.", type: "newyork" },
+      { text: "🌄 Ein friedliches Leben im Einklang mit der Natur.", type: "grindelwald" },
+      { text: "✈️ Eine Mischung aus Kultur, Abenteuer und internationalem Leben.", type: "london" },
+      { text: "🎨 Ein kreatives, freies Leben voller Inspiration.", type: "paris" }
+    ]
+  }
+];
+
+const results = {
+  newyork: { name: "New York, USA 🇺🇸", flag: "🗽", desc: "Du liebst Energie, Karriere und Dynamik! New York ist niemals still und passt perfekt zu deinen ambitionierten Zielen und deiner Neugier." },
+  grindelwald: { name: "Grindelwald, Schweiz 🇨🇭", flag: "🏔️", desc: "Du brauchst Natur, frische Luft und Ruhe. Das majestätische Bergdorf Grindelwald bietet dir die perfekte Kulisse, um dem Stress zu entkommen." },
+  paris: { name: "Paris, Frankreich 🇫🇷", flag: "🎨", desc: "Kunst, Gastronomie, Eleganz und Kultur inspirieren dich täglich. Paris ist für deinen Lebensstil und deinen Geschmack wie gemacht." },
+  barcelona: { name: "Barcelona, Spanien 🇪🇸", flag: "🌊", desc: "Sonne, Meer, gutes Essen und ein entspanntes Stadtleben machen dich glücklich. In Barcelona verbindest du Strand und Großstadt!" },
+  amsterdam: { name: "Amsterdam, Niederlande 🇳🇱", flag: "🚲", desc: "Freiheit, Nachhaltigkeit, Fahrräder und ein modernes, offenes Stadtleben passen ganz genau zu deiner Einstellung." },
+  rothenburg: { name: "Rothenburg ob der Tauber, Deutschland 🇩🇪", flag: "🏰", desc: "Du schätzt Geschichte, Gemütlichkeit und Sicherheit. Dieses idyllische deutsche Städtchen gibt dir die Ruhe, die du suchst." },
+  tokio: { name: "Tokio, Japan 🇯🇵", flag: "🤖", desc: "Fasziniert von Technologie, neuer Kultur und futuristischem Großstadtleben? Tokio ist dein persönliches Abenteuer!" },
+  london: { name: "London, Großbritannien 🇬🇧", flag: "🇬🇧", desc: "Vielfalt, Geschichte, internationale Karrierechancen und Kultur – London bietet dir von allem das Beste." }
+};
+
+let currentQ = 0;
+let scores = { newyork: 0, grindelwald: 0, paris: 0, barcelona: 0, amsterdam: 0, rothenburg: 0, tokio: 0, london: 0 };
+
+function showQuestion() {
+  const q = questions[currentQ];
+  document.getElementById("progress").innerText = `Frage ${currentQ + 1} von ${questions.length}`;
+  document.getElementById("question").innerText = q.q;
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
+  
+  q.a.forEach(ans => {
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.innerText = ans.text;
+    btn.onclick = () => selectAnswer(ans.type);
+    answersDiv.appendChild(btn);
+  });
+}
+
+function selectAnswer(type) {
+  scores[type]++;
+  currentQ++;
+  if (currentQ < questions.length) {
+    showQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById("quiz").style.display = "none";
+  document.getElementById("result").style.display = "block";
+  
+  let topType = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+  let res = results[topType];
+  
+  document.getElementById("flag").innerText = res.flag;
+  document.getElementById("place").innerText = "Dein perfekter Ort ist: " + res.name;
+  document.getElementById("desc").innerText = res.desc;
+}
+
+showQuestion();
+</script>
+</body>
+</html>
